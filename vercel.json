@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "ear-vite": {
+      "root": "ear-vite",
+      "framework": "vite"
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": { "service": "ear-vite" } }
+  ]
+}
