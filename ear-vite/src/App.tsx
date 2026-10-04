@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { EditorialWebinar3MinVideo } from "./components/EditorialWebinar3MinVideo"
+import { Reels1MinVideo } from "./components/Reels1MinVideo"
 import "./index.css"
 
 export default function App() {
@@ -8,6 +9,7 @@ export default function App() {
   const [key, setKey] = useState(0)
   const [showIntro, setShowIntro] = useState(true)
   const [isRecording, setIsRecording] = useState(false)
+  const [mode, setMode] = useState<"webinar" | "reels">("webinar")
   const recorderRef = useRef<MediaRecorder | null>(null)
   const recordingStreamRef = useRef<MediaStream | null>(null)
   const recordingChunksRef = useRef<Blob[]>([])
@@ -15,7 +17,7 @@ export default function App() {
   useEffect(() => {
     const introTimer = window.setTimeout(() => setShowIntro(false), 2400)
     return () => window.clearTimeout(introTimer)
-  }, [key])
+  }, [key, mode])
 
   const handleReplay = () => {
     setKey(prev => prev + 1)
@@ -25,6 +27,15 @@ export default function App() {
 
   const handleTogglePlay = () => {
     setIsPlaying(prev => !prev)
+  }
+
+  const handleModeSwitch = (newMode: "webinar" | "reels") => {
+    if (newMode !== mode) {
+      setMode(newMode)
+      setKey(prev => prev + 1)
+      setIsPlaying(true)
+      setShowIntro(true)
+    }
   }
 
   const handleRecording = async () => {
@@ -67,7 +78,7 @@ export default function App() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `equipos-alto-rendimiento-TECH TI-${new Date().toISOString().slice(0, 10)}.webm`
+        a.download = `${mode === "reels" ? "reel" : "webinar"}-equipos-alto-rendimiento-TECH-TI-${new Date().toISOString().slice(0, 10)}.webm`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
@@ -150,6 +161,38 @@ export default function App() {
             )}
           </AnimatePresence>
 
+          {/* ── Mode selector bar (Webinar vs Reel) ──────────────────────────── */}
+          <div style={{ position: "absolute", top: 16, left: 18, zIndex: 200, display: "flex", gap: 8 }}>
+            <button
+              onClick={() => handleModeSwitch("webinar")}
+              style={{
+                padding: "8px 16px", borderRadius: 999,
+                border: mode === "webinar" ? "1px solid #E5BE53" : "1px solid rgba(255,255,255,0.2)",
+                background: mode === "webinar" ? "#C59B27" : "rgba(8,11,16,0.80)",
+                color: "#FFFFFF", fontWeight: 800, fontSize: 12, cursor: "pointer",
+                backdropFilter: "blur(12px)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+                display: "flex", alignItems: "center", gap: 6,
+                transition: "all 0.2s ease",
+              }}
+            >
+              🎬 Webinar (3 Min)
+            </button>
+            <button
+              onClick={() => handleModeSwitch("reels")}
+              style={{
+                padding: "8px 16px", borderRadius: 999,
+                border: mode === "reels" ? "1px solid #E5BE53" : "1px solid rgba(255,255,255,0.2)",
+                background: mode === "reels" ? "#C59B27" : "rgba(8,11,16,0.80)",
+                color: "#FFFFFF", fontWeight: 800, fontSize: 12, cursor: "pointer",
+                backdropFilter: "blur(12px)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+                display: "flex", alignItems: "center", gap: 6,
+                transition: "all 0.2s ease",
+              }}
+            >
+              📱 Reel 9:16 (1 Min)
+            </button>
+          </div>
+
           {/* ── Control pill ─────────────────────────────────────────────────── */}
           <div style={{
             position: "absolute", bottom: 16, right: 18,
@@ -216,17 +259,36 @@ export default function App() {
             </div>
           </div>
 
-          {/* ── Video principal ───────────────────────────────────────────────── */}
-          <EditorialWebinar3MinVideo
-            key={key}
-            isPlaying={isPlaying}
-            onComplete={() => {
-              // Detener grabación automáticamente al terminar el video
-              if (recorderRef.current?.state === "recording") {
-                recorderRef.current.stop()
-              }
-            }}
-          />
+          {/* ── Video principal (Webinar u Horizontal o Reel Vertical 9:16) ──── */}
+          {mode === "webinar" ? (
+            <EditorialWebinar3MinVideo
+              key={key}
+              isPlaying={isPlaying}
+              onComplete={() => {
+                if (recorderRef.current?.state === "recording") {
+                  recorderRef.current.stop()
+                }
+              }}
+            />
+          ) : (
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 0", zIndex: 50 }}>
+              <Reels1MinVideo
+                key={key}
+                isPlaying={isPlaying}
+                onComplete={() => {
+                  if (recorderRef.current?.state === "recording") {
+                    recorderRef.current.stop()
+                  }
+                }}
+              />
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  )
+}
 
         </div>
       </div>
