@@ -2,32 +2,32 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { sfx } from "../lib/sfx"
 
-// ─── Carátula Color Palette ─────────────────────────────────────────────────
-const CREAM    = "#FAF6F0"   // Warm refined cream
-const DARK     = "#141316"   // Deep rich charcoal
-const DARK2    = "#1E1C22"   // Elevated dark card background
-const GOLD     = "#C59B27"   // Carátula primary Gold accent
-const GOLD2    = "#E5BE53"   // Light gold highlight
-const GOLD3    = "#A37B14"   // Deep gold
-const BURGUNDY = "#8C2B2E"   // Burgundy detail
+// ─── Color Palette ────────────────────────────────────────────────────────────
+const CREAM = "#FAF6F0"
+const DARK = "#141316"
+const DARK2 = "#1E1C22"
+const GOLD = "#C59B27"
+const GOLD2 = "#E5BE53"
+const GOLD3 = "#A37B14"
+const BURGUNDY = "#8C2B2E"
 
-// ─── Curated Unsplash Photos (Vertical / Portrait Team Photos) ─────────────
+// ─── Vertical Portrait Images ─────────────────────────────────────────────────
 const REEL_IMAGES = [
-  "/img/CARATULA TECTI.png", // 0: Portada
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=85", // 1: Grupo vs Equipo
-  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85", // 2: Factores
-  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=800&q=85", // 3: Metas SMART
-  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=85", // 4: Autocorrección
-  "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=85", // 5: Comunicación
-  "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?auto=format&fit=crop&w=800&q=85", // 6: Confianza
-  "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=800&q=85", // 7: Conclusión
+  "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?auto=format&fit=crop&w=800&q=85",
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=85",
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=85",
+  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=800&q=85",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=85",
+  "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=85",
+  "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?auto=format&fit=crop&w=800&q=85",
+  "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=800&q=85",
 ]
 
-// ─── 1-Min Fast Narrations & Titles (5-7 seconds each = ~55s total) ────────
+// ─── Segments ─────────────────────────────────────────────────────────────────
 const REEL_SEGMENTS = [
   {
     title: "DIRECCIÓN DE EQUIPOS",
-    subtitle: "TECH TI 903M · ITIC UTN",
+    subtitle: "UTN",
     narration: "Bienvenidos a este Reel sobre Dirección de Equipos de Alto Rendimiento, presentado por el Equipo cuatro del grupo ITIC novecientos tres M.",
     keywords: ["#AltoRendimiento", "#TechTI903M", "#UTN", "#Equipo4"],
     isDark: false,
@@ -77,7 +77,7 @@ const REEL_SEGMENTS = [
   {
     title: "¡CONSTRUYE TU EQUIPO!",
     subtitle: "GRACIAS POR VER · REELS TECH TI",
-    narration: "Un equipo de alto rendimiento se construye día a día. Muchas gracias por su atención y no te pierdas nuestros próximos reels.",
+    narration: "Un equipo de alto rendimiento se construye día a día. Muchas gracias por su atención y ¡no te pierdas nuestro Webinar!",
     keywords: ["#ReelsTech", "#EquipoGanador", "#Síguenos"],
     isDark: true,
   },
@@ -100,18 +100,16 @@ export interface Reels1MinVideoProps {
 export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoProps) {
   const [segmentIdx, setSegmentIdx] = useState(0)
   const [audioTime, setAudioTime] = useState(0)
-  const [elapsed, setElapsed] = useState(0)
   const voiceRunRef = useRef(0)
   const voiceActiveRef = useRef(false)
   const audioTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const speakAIVoice = useCallback((text: string, onEnd: () => void) => {
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel()
       const utterance = new SpeechSynthesisUtterance(text)
       utterance.lang = "es-ES"
-      utterance.rate = 1.15 // Fast energetic pace for Reels
+      utterance.rate = 1.1
       utterance.onend = onEnd
       utterance.onerror = onEnd
       window.speechSynthesis.speak(utterance)
@@ -151,29 +149,19 @@ export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoP
     })
   }, [speakAIVoice, onComplete])
 
-  const fmtTime = (s: number) => {
-    const sec = (s % 60).toString().padStart(2, "0")
-    const ms  = Math.floor((s * 10) % 10)
-    return `${sec}.${ms}s`
-  }
-
   useEffect(() => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel()
     if (audioTimerRef.current) clearInterval(audioTimerRef.current)
-    if (elapsedRef.current) clearInterval(elapsedRef.current)
     setSegmentIdx(0)
     setAudioTime(0)
-    setElapsed(0)
     sfx.playPop()
     playVoiceForMode(0)
 
-    elapsedRef.current = setInterval(() => setElapsed(prev => prev + 1), 1000)
     return () => {
       voiceRunRef.current += 1
       voiceActiveRef.current = false
       if ("speechSynthesis" in window) window.speechSynthesis.cancel()
       if (audioTimerRef.current) clearInterval(audioTimerRef.current)
-      if (elapsedRef.current) clearInterval(elapsedRef.current)
     }
   }, []) // eslint-disable-line
 
@@ -221,52 +209,43 @@ export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoP
         transition: "background 0.4s ease, color 0.4s ease",
       }}
     >
-      {/* ── Background Image Layer with Zoom Animation ── */}
+      {/* ── Background Image with Fade + Zoom ── */}
       <AnimatePresence mode="wait">
         <motion.div
           key={`img-${segmentIdx}`}
-          initial={{ opacity: 0, scale: 1.15 }}
-          animate={{ opacity: 0.38, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 0.65, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.75, ease: "easeOut" }}
           style={{ position: "absolute", inset: 0, zIndex: 0 }}
         >
           <img
             src={REEL_IMAGES[segmentIdx]}
             alt="Reel segment"
-            style={{ width: "100%", height: "100%", objectFit: "cover", filter: "contrast(1.05) brightness(0.9)" }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", filter: "contrast(1.08) brightness(0.92)" }}
           />
+          {/* Subtle gradient so text stays readable */}
           <div
             style={{
               position: "absolute",
               inset: 0,
               background: isDark
-                ? `linear-gradient(180deg, ${DARK}EE 0%, ${DARK}88 40%, ${DARK}FE 100%)`
-                : `linear-gradient(180deg, ${CREAM}EE 0%, ${CREAM}88 40%, ${CREAM}FE 100%)`,
+                ? `linear-gradient(180deg, ${DARK}CC 0%, ${DARK}44 45%, ${DARK}DD 100%)`
+                : `linear-gradient(180deg, ${CREAM}CC 0%, ${CREAM}44 45%, ${CREAM}DD 100%)`,
             }}
           />
         </motion.div>
       </AnimatePresence>
 
-      {/* ── Top Reels Story Progress Bars ── */}
+      {/* ── Story Progress Bars ── */}
       <div style={{ position: "absolute", top: 14, left: 16, right: 16, display: "flex", gap: 5, zIndex: 90 }}>
         {REEL_SEGMENTS.map((_, i) => (
           <div
             key={i}
-            style={{
-              flex: 1,
-              height: 3,
-              borderRadius: 2,
-              background: "rgba(128,128,128,0.25)",
-              overflow: "hidden",
-            }}
+            style={{ flex: 1, height: 3, borderRadius: 2, background: "rgba(128,128,128,0.22)", overflow: "hidden" }}
           >
             <motion.div
-              style={{
-                height: "100%",
-                background: GOLD,
-                boxShadow: `0 0 8px ${GOLD}`,
-              }}
+              style={{ height: "100%", background: GOLD, boxShadow: `0 0 6px ${GOLD}` }}
               initial={{ scaleX: i < segmentIdx ? 1 : 0 }}
               animate={{ scaleX: i < segmentIdx ? 1 : i === segmentIdx ? Math.min(1, audioTime / 6) : 0 }}
               transition={{ duration: 0.2 }}
@@ -275,7 +254,7 @@ export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoP
         ))}
       </div>
 
-      {/* ── Reel Top Bar (Channel / Title + Live audio visualizer) ── */}
+      {/* ── Top Bar: Channel Identity + Audio Bars ── */}
       <div
         style={{
           position: "relative",
@@ -286,50 +265,30 @@ export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoP
           alignItems: "center",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: "50%",
-              background: `linear-gradient(135deg, ${GOLD}, ${BURGUNDY})`,
-              display: "grid",
-              placeItems: "center",
-              color: "#FFF",
-              fontWeight: 900,
-              fontSize: 12,
-              boxShadow: `0 0 12px ${GOLD}88`,
-            }}
-          >
-            TI
-          </div>
-          <div>
-            <span style={{ fontSize: 13, fontWeight: 900, letterSpacing: "0.5px", display: "block" }}>
-              TECH TI 903M
-            </span>
-            <span style={{ fontSize: 10, color: isDark ? GOLD2 : GOLD3, fontFamily: "var(--font-mono)" }}>
-              REEL ESPONÁNEO · 1 MIN
-            </span>
-          </div>
+        {/* Channel label — no icon */}
+        <div>
+          <span style={{ fontSize: 13, fontWeight: 900, letterSpacing: "0.5px", display: "block", color: isDark ? "#FFFFFF" : DARK }}>
+            Equipos de Alto Rendimiento
+          </span>
+          <span style={{ fontSize: 10, color: isDark ? GOLD2 : GOLD3, fontFamily: "var(--font-mono)" }}>
+            UTN · REEL
+          </span>
         </div>
 
-        {/* Floating Audio Wave Visualizer */}
-        <div style={{ display: "flex", alignItems: "center", gap: 3, padding: "4px 10px", borderRadius: 20, background: "rgba(197,155,39,0.15)", border: `1px solid ${GOLD}44` }}>
-          {[12, 20, 14, 24, 16].map((h, i) => (
+        {/* Audio wave bars only — no timer text */}
+        <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+          {[10, 18, 12, 22, 14, 20, 11].map((h, i) => (
             <motion.div
               key={i}
               style={{ width: 3, borderRadius: 2, background: GOLD }}
-              animate={{ height: isPlaying ? [6, h, 8] : 6 }}
-              transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
+              animate={{ height: isPlaying ? [5, h, 6] : 4 }}
+              transition={{ duration: 0.45, repeat: Infinity, delay: i * 0.07, ease: "easeInOut" }}
             />
           ))}
-          <span style={{ fontSize: 10, fontWeight: 800, color: GOLD, fontFamily: "var(--font-mono)", marginLeft: 4 }}>
-            {fmtTime(elapsed)}
-          </span>
         </div>
       </div>
 
-      {/* ── Main Vertical Story Card Content ── */}
+      {/* ── Main Content Card ── */}
       <div
         style={{
           position: "relative",
@@ -344,35 +303,35 @@ export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoP
         <AnimatePresence mode="wait">
           <motion.div
             key={`content-${segmentIdx}`}
-            initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
+            initial={{ opacity: 0, y: 22, filter: "blur(8px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, y: -20, filter: "blur(6px)" }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: -18, filter: "blur(6px)" }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             style={{ display: "flex", flexDirection: "column", gap: 14 }}
           >
-            {/* Reel Badge */}
+            {/* Subtitle badge */}
             <span
               style={{
                 alignSelf: "flex-start",
                 fontSize: 10.5,
                 fontWeight: 900,
-                letterSpacing: "2.5px",
+                letterSpacing: "2px",
                 textTransform: "uppercase",
                 padding: "4px 12px",
                 borderRadius: 999,
-                background: isDark ? "rgba(225,190,83,0.18)" : "rgba(163,123,20,0.14)",
+                background: isDark ? "rgba(225,190,83,0.16)" : "rgba(163,123,20,0.12)",
                 color: isDark ? GOLD2 : GOLD3,
-                border: `1px solid ${GOLD}55`,
+                border: `1px solid ${GOLD}44`,
                 fontFamily: "var(--font-mono)",
               }}
             >
               {currentSegment.subtitle}
             </span>
 
-            {/* Reel Main Title */}
+            {/* Main title */}
             <h2
               style={{
-                fontSize: "clamp(1.8rem, 6vw, 2.5rem)",
+                fontSize: "clamp(1.75rem, 6vw, 2.4rem)",
                 fontWeight: 900,
                 letterSpacing: "-0.02em",
                 lineHeight: 1.02,
@@ -383,20 +342,20 @@ export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoP
               {currentSegment.title}
             </h2>
 
-            {/* Reel Narration Extract Card */}
+            {/* Narration card */}
             <div
               style={{
-                padding: "16px 18px",
+                padding: "15px 17px",
                 borderRadius: 18,
                 background: isDark ? DARK2 : "#FFFFFF",
                 border: `1px solid ${GOLD}44`,
-                boxShadow: isDark ? "0 10px 30px rgba(0,0,0,0.4)" : "0 8px 24px rgba(31,28,27,0.08)",
+                boxShadow: isDark ? "0 10px 28px rgba(0,0,0,0.45)" : "0 8px 22px rgba(31,28,27,0.08)",
               }}
             >
               <p
                 style={{
                   fontSize: 14,
-                  lineHeight: 1.6,
+                  lineHeight: 1.65,
                   fontWeight: 500,
                   margin: 0,
                   color: isDark ? "rgba(255,255,255,0.9)" : "rgba(31,28,27,0.9)",
@@ -406,14 +365,14 @@ export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoP
               </p>
             </div>
 
-            {/* Dynamic Hashtag Chips */}
+            {/* Keyword chips */}
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {currentSegment.keywords.map((kw, i) => (
                 <motion.span
                   key={kw}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.82 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 + i * 0.08 }}
+                  transition={{ delay: 0.18 + i * 0.07 }}
                   style={{
                     fontSize: 11,
                     fontWeight: 700,
@@ -429,121 +388,148 @@ export function Reels1MinVideo({ isPlaying = true, onComplete }: Reels1MinVideoP
               ))}
             </div>
 
-            {/* Final Segment: Team Members Callout */}
-            {segmentIdx === 7 && (
+            {/* Slide 0: integrantes en portada */}
+            {segmentIdx === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
                 style={{
-                  padding: "12px 14px",
+                  padding: "11px 14px",
                   borderRadius: 12,
-                  background: `linear-gradient(135deg, ${GOLD3}, ${GOLD})`,
-                  color: "#FFF",
-                  marginTop: 6,
+                  background: isDark ? DARK2 : "rgba(255,255,255,0.85)",
+                  border: `1px solid ${GOLD}44`,
+                  marginTop: 2,
                 }}
               >
-                <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: "1px", display: "block", marginBottom: 4 }}>
-                  INTEGRANTES EQUIPO 4:
+                <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: "1.5px", display: "block", marginBottom: 5, color: isDark ? GOLD2 : GOLD3, textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>
+                  Integrantes Equipo 4
                 </span>
-                <p style={{ fontSize: 11, lineHeight: 1.4, margin: 0, opacity: 0.95 }}>
-                  {MEMBERS.join(" · ")}
-                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  {MEMBERS.map((m, i) => (
+                    <span key={i} style={{ fontSize: 11, fontWeight: 600, color: isDark ? "rgba(255,255,255,0.88)" : "rgba(20,19,22,0.88)", lineHeight: 1.4 }}>
+                      {i + 1}. {m}
+                    </span>
+                  ))}
+                </div>
               </motion.div>
+            )}
+
+            {/* Slide 7: integrantes + webinar CTA */}
+            {segmentIdx === 7 && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: 12,
+                    background: `linear-gradient(135deg, ${GOLD3}, ${GOLD})`,
+                    color: "#FFF",
+                    marginTop: 4,
+                  }}
+                >
+                  <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: "1px", display: "block", marginBottom: 4 }}>
+                    INTEGRANTES EQUIPO 4:
+                  </span>
+                  <p style={{ fontSize: 11, lineHeight: 1.45, margin: 0, opacity: 0.95 }}>
+                    {MEMBERS.join(" · ")}
+                  </p>
+                </motion.div>
+
+                {/* Webinar CTA banner */}
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  style={{
+                    padding: "13px 16px",
+                    borderRadius: 14,
+                    background: DARK2,
+                    border: `1.5px solid ${GOLD}66`,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>🎬</span>
+                  <div>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: GOLD2, display: "block", letterSpacing: "0.5px" }}>
+                      ¡NO TE PIERDAS NUESTRO WEBINAR!
+                    </span>
+                    <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.7)", fontFamily: "var(--font-mono)" }}>
+                      Versión completa · TECH TI 903M
+                    </span>
+                  </div>
+                </motion.div>
+              </>
             )}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* ── Reel Right Action Bar (Instagram Reels Floating Icons) ── */}
-      <div
-        style={{
-          position: "absolute",
-          right: 14,
-          bottom: 100,
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-          alignItems: "center",
-          zIndex: 85,
-        }}
-      >
-        {[
-          { icon: "❤️", count: "903k" },
-          { icon: "💬", count: "404" },
-          { icon: "⚡", count: "Share" },
-        ].map(({ icon, count }) => (
-          <div key={icon} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                background: "rgba(0,0,0,0.35)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                display: "grid",
-                placeItems: "center",
-                fontSize: 16,
-                cursor: "pointer",
-              }}
-            >
-              {icon}
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 700, color: "#FFF", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-              {count}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Reel Bottom Controls (Prev / Next Tap Navigation) ── */}
+      {/* ── Bottom Navigation (Prev / Counter / Next) ── */}
       <div
         style={{
           position: "relative",
           zIndex: 80,
-          padding: "16px 20px 24px 20px",
+          padding: "14px 20px 22px 20px",
           display: "flex",
-          justify: "space-between",
+          justifyContent: "space-between",
           alignItems: "center",
-          background: isDark ? "rgba(20,19,22,0.85)" : "rgba(250,246,240,0.85)",
-          backdropFilter: "blur(12px)",
-          borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)"}`,
+          background: isDark ? "rgba(20,19,22,0.88)" : "rgba(250,246,240,0.88)",
+          backdropFilter: "blur(14px)",
+          borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"}`,
         }}
       >
         <button
           onClick={handlePrev}
           disabled={segmentIdx === 0}
           style={{
-            padding: "8px 16px",
+            padding: "8px 18px",
             borderRadius: 999,
             border: `1px solid ${GOLD}55`,
             background: "transparent",
-            color: segmentIdx === 0 ? "gray" : GOLD,
+            color: segmentIdx === 0 ? (isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)") : GOLD,
             fontWeight: 800,
             fontSize: 12,
             cursor: segmentIdx === 0 ? "not-allowed" : "pointer",
+            transition: "opacity 0.2s",
           }}
         >
           ← Ant.
         </button>
 
-        <span style={{ fontSize: 11, fontWeight: 800, color: GOLD, fontFamily: "var(--font-mono)" }}>
-          {segmentIdx + 1} / {total} REEL
-        </span>
+        {/* Dot indicators */}
+        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+          {REEL_SEGMENTS.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: i === segmentIdx ? 16 : 6,
+                height: 6,
+                borderRadius: 999,
+                background: i === segmentIdx ? GOLD : (isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.2)"),
+                transition: "width 0.3s ease, background 0.3s ease",
+              }}
+            />
+          ))}
+        </div>
 
         <button
           onClick={handleNext}
           disabled={segmentIdx === total - 1}
           style={{
-            padding: "8px 16px",
+            padding: "8px 18px",
             borderRadius: 999,
             border: "none",
-            background: GOLD,
+            background: segmentIdx === total - 1 ? "rgba(197,155,39,0.3)" : GOLD,
             color: "#FFF",
             fontWeight: 800,
             fontSize: 12,
             cursor: segmentIdx === total - 1 ? "not-allowed" : "pointer",
-            boxShadow: `0 4px 14px ${GOLD}66`,
+            boxShadow: segmentIdx === total - 1 ? "none" : `0 4px 14px ${GOLD}66`,
+            transition: "background 0.2s, box-shadow 0.2s",
           }}
         >
           Sig. →

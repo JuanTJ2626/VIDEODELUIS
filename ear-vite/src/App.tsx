@@ -13,6 +13,8 @@ export default function App() {
   const recorderRef = useRef<MediaRecorder | null>(null)
   const recordingStreamRef = useRef<MediaStream | null>(null)
   const recordingChunksRef = useRef<Blob[]>([])
+  const reelsWrapperRef = useRef<HTMLDivElement | null>(null)
+  const canvasAnimRef = useRef<number | null>(null)
 
   useEffect(() => {
     const introTimer = window.setTimeout(() => setShowIntro(false), 2400)
@@ -39,7 +41,7 @@ export default function App() {
   }
 
   const handleRecording = async () => {
-    // ── DETENER manualmente si ya graba ──────────────────────────────────────
+    // ── DETENER ───────────────────────────────────────────────────────────────
     if (recorderRef.current?.state === "recording") {
       recorderRef.current.stop()
       return
@@ -51,7 +53,6 @@ export default function App() {
     }
 
     try {
-      // ── INICIAR grabación ─────────────────────────────────────────────────
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: { ideal: 30, max: 60 } },
         audio: true,
@@ -63,7 +64,54 @@ export default function App() {
         "video/webm",
       ].find((t) => MediaRecorder.isTypeSupported(t)) ?? ""
 
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      let recordStream: MediaStream = stream
+
+      // ── Modo Reels: recortar canvas al panel 9:16 ─────────────────────────
+      if (mode === "reels" && reelsWrapperRef.current) {
+        const panel = reelsWrapperRef.current
+
+        // Video de preview para leer los frames capturados
+        const preview = document.createElement("video")
+        preview.srcObject = stream
+        preview.muted = true
+        await preview.play()
+
+        // Esperar dimensiones reales del stream
+        await new Promise<void>((res) => {
+          if (preview.videoWidth > 0) res()
+          else preview.onloadedmetadata = () => res()
+        })
+
+        const rect = panel.getBoundingClientRect()
+        // Escala: px CSS → px reales capturados
+        const sx = preview.videoWidth  / window.innerWidth
+        const sy = preview.videoHeight / window.innerHeight
+
+        const canvas = document.createElement("canvas")
+        canvas.width  = Math.round(rect.width  * sx)
+        canvas.height = Math.round(rect.height * sy)
+        const ctx = canvas.getContext("2d")!
+
+        // Loop de dibujo
+        const draw = () => {
+          const r = panel.getBoundingClientRect()
+          ctx.drawImage(
+            preview,
+            r.left * sx, r.top * sy,
+            r.width * sx, r.height * sy,
+            0, 0, canvas.width, canvas.height
+          )
+          canvasAnimRef.current = requestAnimationFrame(draw)
+        }
+        draw()
+
+        // Stream del canvas + audio del screen capture
+        const canvasStream = canvas.captureStream(30)
+        stream.getAudioTracks().forEach((t) => canvasStream.addTrack(t))
+        recordStream = canvasStream
+      }
+
+      const recorder = new MediaRecorder(recordStream, mimeType ? { mimeType } : undefined)
 
       recordingStreamRef.current = stream
       recordingChunksRef.current = []
@@ -74,6 +122,11 @@ export default function App() {
       }
 
       recorder.onstop = () => {
+        // Detener loop de canvas si existe
+        if (canvasAnimRef.current) {
+          cancelAnimationFrame(canvasAnimRef.current)
+          canvasAnimRef.current = null
+        }
         const blob = new Blob(recordingChunksRef.current, { type: mimeType || "video/webm" })
         const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
@@ -97,7 +150,7 @@ export default function App() {
       recorder.start(1000)
       setIsRecording(true)
 
-      // ── Reiniciar el video desde el inicio automáticamente ────────────────
+      // Reiniciar desde el inicio
       setKey(prev => prev + 1)
       setIsPlaying(true)
       setShowIntro(true)
@@ -120,19 +173,8 @@ export default function App() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, scale: 1.08, filter: "blur(18px)" }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                style={{ position: "absolute", inset: 0, zIndex: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, background: "radial-gradient(ellipse at 15% 15%, rgba(0,255,214,0.28), transparent 30%), radial-gradient(ellipse at 85% 75%, rgba(255,47,134,0.22), transparent 34%), radial-gradient(ellipse at 50% 45%, rgba(77,110,255,0.22), transparent 52%), conic-gradient(from 210deg at 50% 50%, #080b10, #101a30, #080b10 70%)", color: "#F4F7F7", overflow: "hidden" }}
+                style={{ position: "absolute", inset: 0, zIndex: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, background: "#080b10", color: "#F4F7F7", overflow: "hidden" }}
               >
-                <motion.div
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 1.1, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ position: "absolute", top: "50%", left: "8%", right: "8%", height: 1, background: "rgba(57,230,210,0.75)", transformOrigin: "center", boxShadow: "0 0 24px rgba(57,230,210,0.5)" }}
-                />
-                <motion.div
-                  animate={{ rotate: [0, 360], scale: [1, 1.08, 1] }}
-                  transition={{ rotate: { duration: 32, repeat: Infinity, ease: "linear" }, scale: { duration: 8, repeat: Infinity, ease: "easeInOut" } }}
-                  style={{ position: "absolute", width: "62vw", height: "62vw", maxWidth: 900, maxHeight: 900, borderRadius: "50%", border: "1px solid rgba(57,230,210,0.12)", boxShadow: "0 0 90px rgba(0,199,190,0.1), inset 0 0 90px rgba(99,102,241,0.08)", pointerEvents: "none" }}
-                />
                 <motion.span
                   initial={{ opacity: 0, y: 28, letterSpacing: "0.5em" }}
                   animate={{ opacity: 0.65, y: 0, letterSpacing: "0.24em" }}
@@ -271,7 +313,10 @@ export default function App() {
               }}
             />
           ) : (
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 0", zIndex: 50 }}>
+            <div
+              ref={reelsWrapperRef}
+              style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 0", zIndex: 50 }}
+            >
               <Reels1MinVideo
                 key={key}
                 isPlaying={isPlaying}
@@ -283,12 +328,6 @@ export default function App() {
               />
             </div>
           )}
-
-        </div>
-      </div>
-    </div>
-  )
-}
 
         </div>
       </div>
